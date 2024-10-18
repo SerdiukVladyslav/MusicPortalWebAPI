@@ -1,0 +1,417 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список пісень</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('/Images/Slipknot-Corey-Taylor.jpg');
+            color: white;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+        }
+
+        .song-list {
+            margin-top: 20px;
+        }
+
+        .song-item {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #444;
+        }
+
+        .add-song-button {
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            background-color: #ffaa00;
+            color: #222;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #ffc107;
+            color: #222;
+            text-decoration: none;
+        }
+
+        #add-song-container {
+            display: none;
+        }
+
+        .card-body {
+            color: #000000;
+        }
+
+        .card-title {
+            color: #000000;
+        }
+
+        .card-text {
+            color: #000000;
+        }
+
+        #edit-song-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .back-action {
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="hideAddSong">
+            <h1>Список пісень</h1>
+            <button class="btn btn-primary add-song-button" onclick="showAddSongForm()">Додати пісню</button>
+        </div>
+
+        <div id="song-list" class="song-list"></div>
+
+        <div id="add-song-container">
+            <h1>Додати пісню</h1>
+            <form id="add-song-form" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="title">Назва пісні</label>
+                    <input type="text" id="title" name="title" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="genreId">Жанр</label>
+                    <select id="genreId" name="genreId" class="form-control" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="artistId">Виконавець</label>
+                    <select id="artistId" name="artistId" class="form-control" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="albumId">Альбом</label>
+                    <select id="albumId" name="albumId" class="form-control" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="countryId">Країна</label>
+                    <select id="countryId" name="countryId" class="form-control" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="musicFile">Файл музики</label>
+                    <input type="file" id="musicFile" name="musicFile" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Додати" class="btn btn-primary">
+                </div>
+            </form>
+            <div class="back-action">
+                <a href="javascript:void(0);" onclick="hideAddSongForm()">Повернутися до списку</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-song-container" style="display: none;">
+        <h1>Редагувати пісню</h1>
+        <form id="edit-song-form" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="editTitle">Назва пісні</label>
+                <input type="text" id="editTitle" name="title" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="editGenreId">Жанр</label>
+                <select id="editGenreId" name="genreId" class="form-control" required></select>
+            </div>
+            <div class="form-group">
+                <label for="editArtistId">Виконавець</label>
+                <select id="editArtistId" name="artistId" class="form-control" required></select>
+            </div>
+            <div class="form-group">
+                <label for="editAlbumId">Альбом</label>
+                <select id="editAlbumId" name="albumId" class="form-control" required></select>
+            </div>
+            <div class="form-group">
+                <label for="editCountryId">Країна</label>
+                <select id="editCountryId" name="countryId" class="form-control" required></select>
+            </div>
+            <div class="form-group">
+                <label for="editMusicFile">Файл музики</label>
+                <input type="file" id="editMusicFile" name="musicFile" class="form-control">
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Оновити" class="btn btn-primary">
+            </div>
+        </form>
+        <div class="back-action">
+            <a href="javascript:void(0);" onclick="hideEditSongForm()">Повернутися до списку</a>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            loadSongs();
+            loadDropdowns();
+
+            $('#add-song-form').submit(function (e) {
+                e.preventDefault();
+                addSong();
+            });
+        });
+
+        function loadSongs() {
+            $.ajax({
+                url: '/api/Home',
+                type: 'GET',
+                success: function (data) {
+                    let rows = '<div class="row">';
+                    data.forEach(song => {
+                        rows += `
+                                <div class="col-md-4">
+                                    <div class="card mb-4 box-shadow">
+                                        <img class="card-img-top" src="${song.albumCover}" alt="Album Cover">
+                                        <div class="card-body">
+                                            <h5 class="card-title">${song.title}</h5>
+                                            <p class="card-text"><strong>Виконавець:</strong> ${song.artist}</p>
+                                            <p class="card-text"><strong>Альбом:</strong> ${song.album}</p>
+                                            <p class="card-text"><strong>Рік:</strong> ${song.year}</p>
+                                            <p class="card-text"><strong>Країна:</strong> ${song.country}</p>
+                                            <p class="card-text"><strong>Жанр:</strong> ${song.genre}</p>
+                                            <audio controls>
+                                                <source src="${song.musicFile}" type="audio/mpeg">
+                                                Your browser does not support the audio element.
+                                            </audio>
+                                            <div>
+                                                <button class="btn btn-warning btn-sm" onclick="showEditSongForm(${song.id})">Редагувати</button>
+                                                <button class="btn btn-danger btn-sm" onclick="deleteSong(${song.id})">Видалити</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>`;
+                    });
+                    rows += '</div>';
+                    $('#song-list').html(rows);
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error loading songs:", status, error);
+                    alert("Не вдалося завантажити пісні. Перевірте консоль для деталей.");
+                }
+            });
+        }
+
+        function loadDropdowns() {
+            $.ajax({
+                url: '/api/genres',
+                type: 'GET',
+                success: function (data) {
+                    populateDropdown('#genreId', data);
+                    populateDropdown('#editGenreId', data);
+                }
+            });
+
+            $.ajax({
+                url: '/api/artists',
+                type: 'GET',
+                success: function (data) {
+                    populateDropdown('#artistId', data);
+                    populateDropdown('#editArtistId', data);
+                }
+            });
+
+            $.ajax({
+                url: '/api/albums',
+                type: 'GET',
+                success: function (data) {
+                    populateDropdown('#albumId', data);
+                    populateDropdown('#editAlbumId', data);
+                }
+            });
+
+            $.ajax({
+                url: '/api/countries',
+                type: 'GET',
+                success: function (data) {
+                    populateDropdown('#countryId', data);
+                    populateDropdown('#editCountryId', data);
+                }
+            });
+        }
+
+        function populateDropdown(selector, data) {
+            let dropdown = $(selector);
+            dropdown.empty();
+            data.forEach(item => {
+                dropdown.append(`<option value="${item.id}">${item.name}</option>`);
+            });
+        }
+
+        function addSong() {
+            let formData = new FormData($('#add-song-form')[0]);
+
+            formData.append('musicFile', $('#musicFile')[0].files[0]);
+
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+
+            console.log('Обраний жанр: ', $('#genreId').val());
+            console.log('Обраний виконавець: ', $('#artistId').val());
+            console.log('Обраний альбом: ', $('#albumId').val());
+            console.log('Обрана країна: ', $('#countryId').val());
+            console.log('Файл у FormData:', formData.get('musicFile'));
+
+            if ($('#musicFile')[0].files.length === 0) {
+                alert('Будь ласка, виберіть файл музики перед додаванням.');
+                return;
+            }
+
+            formData.append('genreId', $('#genreId').val());
+            formData.append('artistId', $('#artistId').val());
+            formData.append('albumId', $('#albumId').val());
+            formData.append('countryId', $('#countryId').val());
+            formData.append('musicFile', $('#musicFile')[0].files[0]);
+
+            $.ajax({
+                type: 'POST',
+                url: '/api/Home',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function () {
+                    alert("Пісня успішно додана!");
+                    loadSongs();
+                    hideAddSongForm();
+                },
+                error: function (x) {
+                    var errorMessage = x.status + ': ' + x.responseText;
+                    console.log(errorMessage);
+                }
+            });
+        }
+
+        function showAddSongForm() {
+            $('#add-song-container').show();
+            $('#hideAddSong').hide();
+            $('#song-list').hide();
+        }
+
+        function hideAddSongForm() {
+            $('#add-song-container').hide();
+            $('#hideAddSong').show();
+            $('#song-list').show();
+        }
+
+        function showEditSongForm(songId) {
+            $('#song-list').hide();
+            $('#hideAddSong').hide();
+
+            loadDropdowns();
+
+            fetch(`/api/Home/${songId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(song => {
+                    document.getElementById('editTitle').value = song.title;
+                    document.getElementById('editGenreId').value = song.genreId;
+                    document.getElementById('editArtistId').value = song.artistId;
+                    document.getElementById('editAlbumId').value = song.albumId;
+                    document.getElementById('editCountryId').value = song.countryId;
+
+                    document.getElementById('edit-song-form').dataset.songId = songId;
+
+                    document.getElementById('edit-song-container').style.display = 'block';
+                    document.getElementById('add-song-container').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error fetching song data:', error);
+                    alert('Помилка при завантаженні даних пісні.');
+                });
+        }
+
+        document.getElementById('edit-song-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const songId = document.getElementById('edit-song-form').dataset.songId;
+            const formData = new FormData();
+            formData.append('title', document.getElementById('editTitle').value);
+            formData.append('genreId', document.getElementById('editGenreId').value);
+            formData.append('artistId', document.getElementById('editArtistId').value);
+            formData.append('albumId', document.getElementById('editAlbumId').value);
+            formData.append('countryId', document.getElementById('editCountryId').value);
+
+            const fileInput = document.getElementById('editMusicFile');
+            if (fileInput.files.length > 0) {
+                formData.append('newMusicFile', fileInput.files[0]);
+            }
+
+            try {
+                const response = await fetch(`/api/Home/${songId}`, {
+                    method: 'PUT',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    alert('Пісню успішно оновлено');
+                    hideEditSongForm();
+                    loadSongs();
+                } else {
+                    alert('Не вдалося оновити пісню');
+                }
+            } catch (error) {
+                console.error('Error updating song:', error);
+                alert('Помилка при оновленні пісні.');
+            }
+        });
+
+        function hideEditSongForm() {
+            document.getElementById('edit-song-container').style.display = 'none';
+            document.getElementById('song-list').style.display = 'block';
+            document.getElementById('hideAddSong').style.display = 'block';
+        }
+
+        function deleteSong(songId) {
+            if (confirm("Ви впевнені, що хочете видалити цю пісню?")) {
+                $.ajax({
+                    url: '/api/Home/' + songId,
+                    type: 'DELETE',
+                    success: function () {
+                        loadSongs();
+                    },
+                    error: function (error) {
+                        console.error("Error deleting song:", error);
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
